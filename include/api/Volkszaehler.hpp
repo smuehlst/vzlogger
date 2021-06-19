@@ -72,6 +72,10 @@ class Volkszaehler : public ApiIF {
 	unsigned int _curlTimeout;
 	std::string _url;
 
+	std::string _certfile;
+	std::string _keyfile;
+	std::string _keypass;
+
 	/**
 	 * Create JSON object of tuples
 	 *

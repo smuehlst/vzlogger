@@ -76,6 +76,42 @@ vz::api::Volkszaehler::Volkszaehler(Channel::Ptr ch, std::list<Option> pOptions)
 		throw;
 	}
 
+	try {
+		_certfile= optlist.lookup_string(pOptions, "certfile");
+	} catch (vz::OptionNotFoundException &e) {
+		// not required
+	} catch (vz::VZException &e) {
+		print(log_alert,
+			  "api volkszaehler requires parameter \"certfile\" as string but seems to have "
+			  "different type!",
+			  ch->name());
+		throw;
+	}
+
+	try {
+		_keyfile= optlist.lookup_string(pOptions, "keyfile");
+	} catch (vz::OptionNotFoundException &e) {
+		// not required
+	} catch (vz::VZException &e) {
+		print(log_alert,
+			  "api volkszaehler requires parameter \"keyfile\" as string but seems to have "
+			  "different type!",
+			  ch->name());
+		throw;
+	}
+
+	try {
+		_keyfile= optlist.lookup_string(pOptions, "keypass");
+	} catch (vz::OptionNotFoundException &e) {
+		// not required
+	} catch (vz::VZException &e) {
+		print(log_alert,
+			  "api volkszaehler requires parameter \"keypass\" as string but seems to have "
+			  "different type!",
+			  ch->name());
+		throw;
+	}
+
 	// prepare header, uuid & url
 	sprintf(agent, "User-Agent: %s/%s (%s)", PACKAGE, VERSION, curl_version()); // build user agent
 	_url = _middleware;
@@ -124,6 +160,25 @@ void vz::api::Volkszaehler::send() {
 	curl_easy_setopt(_api.curl, CURLOPT_VERBOSE, options.verbosity());
 	curl_easy_setopt(_api.curl, CURLOPT_DEBUGFUNCTION, curl_custom_debug_callback);
 	curl_easy_setopt(_api.curl, CURLOPT_DEBUGDATA, channel().get());
+
+	if (_certfile.length() > 0)
+	{
+		curl_easy_setopt(_api.curl, CURLOPT_SSLCERT, _certfile.c_str());
+
+		// TODO Later set CA options
+		curl_easy_setopt(_api.curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(_api.curl, CURLOPT_SSL_VERIFYHOST, 0L);
+	}
+
+	if (_keyfile.length() > 0)
+	{
+		curl_easy_setopt(_api.curl, CURLOPT_SSLKEY, _keyfile.c_str());
+	}
+
+	if (_keypass.length() > 0)
+	{
+		curl_easy_setopt(_api.curl, CURLOPT_KEYPASSWD, _keypass.c_str());
+	}
 
 	// signal-handling in libcurl is NOT thread-safe. so force to deactivated them!
 	curl_easy_setopt(_api.curl, CURLOPT_NOSIGNAL, 1);
